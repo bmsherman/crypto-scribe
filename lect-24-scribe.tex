@@ -136,54 +136,41 @@ If an adversary could find a secret key, then we violate
 
 \section{QR-based encryption scheme}
 
-Parameters: a blum integer $N$ where \emph{no one} knows the factorization.
-: a polynomial paramter $\ell$ which determines how much leakage there will be
 
-Key generation:
-$sk$ is an $\ell$-bit random string $s_1, \ldots, s_\ell$
-$pk$ includes a random $g_1, \ldots, g_\ell \in QR_N$ and some $h = \prod g_i^{-s_i}$, i.e., $h$ is a product of a random subset of the $g$'s. The secret key has no structure! It's just a random $\ell$-bit string
+\textbf{Setup:} Choose a Blum integer $N$ such that no party knows the factorization. Let $\ell$ be a parameter for the amount of leakage.
 
-To encrypt a message $m \in \bit$, we sample $r \leftarrow [N^2]$ and output $c = (g_1^r, \ldots, g_\ell^r, (-1)^mh^r)$.
+\textbf{Key Generation:} Randomly sample  $sk = (s_0,\dots,s_\ell) \leftarrow \{0,1\}^\ell$. For $i \in [1,\ell]$, sample $g_i \leftarrow QR_N$. $pk = (g_1,\dots,g_\ell,h)$, where $h = \prod_{i=1}^\ell g_i^{-s_i}$.
 
-Why $r$ in $[N^2]$ If we use a large enough interval, then it will come close enough to looking like it comes from $\varphi(N)$. 
+\textbf{Encryption:} Randomly sample $r \leftarrow \mathbb{Z} \cap [0,N^2]$. For a message $m \in \{0,1\}$ and public key $(g_1,\dots,g_\ell,h)$, compute the ciphertext $c = (g_1^r,\dots,g_\ell^r,(-1)^m h^r)$. 
 
-Want to take $r \in [1, \ldots, |QR_N|]$ but can't computer $|QR_N|$ since this is $\phi(N)/4)$ or something like this [[need to check correctness].
+\textbf{Decryption:} Given the ciphertext $(c_1,\dots,c_\ell,c_0)$ and secret key $(s_1,\dots,s_\ell)$, compute $m = c_0 \prod_{i=1}^\ell c_i^{s_i}$.
 
-Decryption:
+Note that we chose $r$ from a set of size $N^2$, not $N$. The reason for this is ideally we would choose $r$ from a set the same size as $QR_N$, but we can't compute $|QR_N|$ without the factorization of $N$. Choosing $r$ from a set of size $N^2$ gets us close enough.
 
-To decrypt $c = (c_1, \ldots, c_\ell, c_0)$, compute $c_0 \prod c_i^{s_i} = (-1)^m$. It's very similar to what was going on in El Gamal.
+\textbf{Remark 1:} There are exponentially many secret keys which match the public key, for $\ell$ large enough. In fact, for the right choice of $\ell$, the $h$ will be very close to a uniform distribution; this follows from the leftover hash lemma. 
 
-Remark 1: There are exponentially many secret keys which match the public key, for $\ell$ large enough. In fact, for the right choice of $\ell$, the $h$ will be very close to a uniform distribution; this follows from the leftover hash lemma. 
+\begin{definition}
+$H$ is a 2-universal hash family for $\mathcal{X} \rightarrow \mathcal{Y}$ if $\forall x,y \; \Pr_{h \leftarrow H}(h(x) = h(y)) = \frac{1}{|\mathcal{Y}|}$.
+\end{definition}
 
-[[Put a good description of the Leftover Hash Lemma here:
+\begin{lemma}
+The leftover hash lemma. If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$, $\mathcal{L} \in \mathcal{X} \rightarrow \mathcal{Y}$, $(h,h(x),L(x)) \approx (h,y,L(x))$, where $h \leftarrow H$ and $y \leftarrow \mathcal{Y}$.
+\end{lemma}
 
-Definition of a 2-universal hash family for $X \to Y$, and the theorem of the leftover hash lemma]]
+The claim here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx (g_1,\dots,g_\ell,U)$.
 
-Take $\ell > 3 \log |G|$ using the uniform hash lemma.
+\begin{definition}
+Min-entropy. For a probability distribution $X$, we can define the min-entropy as $H_1(X) = -\log \max_x \Pr(X = x)$. We say a random source is a $k$-source if $H_1(X) > k \iff \forall x \Pr(X = x) < 2^{-k}$.
+\end{definition}
 
-LHL tells us that $h$ gives us almost no information about $s$. So even if we give a bounded amount of information about $h$, it will tell very little about $s$.
+\begin{definition}
+An extractor is a function $\mathrm{Ext}(x,r)$, where $x$ comes from a $k$-source, $r$ is a string of $d$ random bits, and $\mathrm{Ext}(x,r)$ is a string of bits of length $\ell$ that is indistinguishable from uniform.
+\end{definition}
 
-Remark 2: Multiplying by $h^r$ is indistinguishable from uniform.  Depends on the notion of min-entropy:
+We can futher refine the definition of an extractor to require it to output nearly uniform bits even when the random seed is exposed. The leftover hash lemma states that we can build these strong extractors out of 2-universal hash functions.
 
-$X$ distribution over $\bit^n$
-\[
-H_1(X) = -\log \max \Prob{X = x},
-\]
-that is, $\Prob{X = x} < 2^{-k}$ for all $x$.
-
-$X$ is $k$-source of entropy if $H(X) > k$.
-
-In the context of the encryption scheme, we can view the secret key as an \emph{entropy source}. I have a secret key. I leak some of it, it should still have entropy left in it.
-
-Extractor: a procedure which starts with a $k$-source, and takes a truly random seed to produce many almost-uniform bits.
-
-In the context of encryption, $h^r$ should be thought of as an extractor step. It is a randomness extractor, and is indistinguishable from uniform.
-\[
-h^r = \prod g_i^{s_i r}
-\]
-[[check is this right??]]
-
-All schemes which we know which are leakage-resilient work this way: Can view things as extractors.
+\textbf{Remark 2:} We can view the secret key as an entropy source, where leaking more bits of the secret key will result in worse bounds on the entropy. We can then design our encryption algorithm to act as a randomness extractor from the secret key and a random seed $r$: $\mathrm{Enc} = \mathrm{Ext}(sk,r) \oplus m$. In our case, $h^r = \prod_{i=1}^\ell g_i^{s_i r}$ serves as the extractor, so $h^r$ is indistinguishable from uniform. All schemes which we know which are leakage-resilient make
+use of extractors.
 
 \section{Part 2: Only computation leaks}
 
