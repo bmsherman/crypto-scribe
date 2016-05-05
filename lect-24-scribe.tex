@@ -29,6 +29,7 @@
 \newcommand{\bool}{\mathbb{B}}
 \newcommand{\cat}{\ ||\ }
 \newcommand{\then}{\ ;\ }
+\newcommand{\keys}{\mathcal{K}}
 
 \begin{document}
 \input{scribe-template-preamble.tex}
@@ -65,7 +66,7 @@ When computations run on a computer, they consume power, and emit noise as well 
 It's possible to translate physical observations into attacks on the security of cryptographic schemes. Our proofs in the class so far have not taken into account these considerations. Attacks include:
 
 \begin{itemize}
-\item \emph{Cold boot attacks} are attacks on computers which are not running. If a computer is inspected not longer after it is shut off, the memory may still retain information, and so it is possible to recover secret keys.
+\item \emph{Cold boot attacks} are attacks on computers which are not running. If a computer is inspected not longer after it is shut off, the memory may still retain information, and so it is possible to recover secret keys. Contents in RAM decay slowly after losing power, and may last for several minutes.
 \item Garfinkle \cite{garfinkel2003} looked at \emph{erased hard disks} and was able to recover lots of forensic information.
 \item \emph{Shared sources of randomness}: Often, there is reuse of secret keys across different cryptographic applications. Using access to many cryptographic public keys, where the private keys are correlated with each other (due to a shared source of randomness), it may be possible to defeat cryptographic security.
 \item \emph{Timing attacks} glean information by measuring how much time a computation takes. For instance, one can, by observing how much time an RSA signing scheme takes, learn about the RSA exponent (given that signing is performed via repeated squaring with the exponent, and some exponents will take longer than others).
@@ -94,23 +95,17 @@ There are a variety of ways to model side-channel attacks. All of the models gen
 
 \section{Bounded memory leakage (ML)}
 
-How to design public key encryption where someone can measure the secret key a bounded number of times?
+In this seection, we will consider how to design a public key encryption scheme which is secure with respect to the bounded memory leakage (ML) model, where the adversary can make partial measurements a bounded number of times.
 
-Memory retains its content after power is lost. Contents in RAM decay slowly; last for several minutes.
+The idea in this model is that the adversary can recover ``noisy''' keys. Suppose you're using RSA, and you have stored in memory the decryption exponent $d$ (where $d e = 1 \mod \varphi(n)$). The adversary can't see $d$ exactly, but can see a noisy version of $d$. 
 
-Can recover ``noisy''' keys. Say you're using RSA, and you have stored in memory the decryption exponent $d$ (where $d e = 1 \mod \varphi(n)$). You can' see $d$ exactly, but can see a noisy version of $d$. We want to deal with this kind of attack.
+We update the notion of semantic security to take into account the adversary's new capabilities. We're going to change it as follows: There is semantic security against a $\lambda$-memory attack if for any leakage function $L(\cdot)$, the adversary can't find $m_0$ and $m_1$ that can distinguish between the encryptions.
 
-Update the notion of semantic security to take into account the adversary's new capabilities. We're going to change it as follows: There is semantic security against a $\lambda$-memory attack if for any leakage function $L(\cdot)$, the adversary can't find $m_0$ and $m_1$ that can distinguish between the encryptions.
+Let $\keys_S$ be the set of private keys. We require for the measurement function $L : \keys_S \to \bit^n$ can only determine a fraction $\lambda$ of the bits, that is, $n \le \lambda \lg |\keys_S|$, or if the space of private keys is bitvectors of length $n_{SK}$, i.e., $\keys_S = \bit^{n_{SK}}$, then $n \le \lambda n_{SK}$. This means that it is impossible for $L$ to uniquely determine the secret key. In fact, this requirement is just as strong as the requirement that there must be some entropy remaining in the secret key when conditioned on the observation of $L$.
 
-The restriction is that $L : SK \to \bit^n$ such that $n = |L(SK)| < \lambda(|SK|)$. This forces that there is some entropy left in the secret key. In fact, this is just a strong as simply requiring that there is some entropy left in the secret key.
+Most contemporary protocols are not very secure with respect to this model. RSA is theoretically secure with up to 50\% leakage, but practically found insecure with as little as 25\% leakage. AES is insecure against 85\% leakage.
 
-RSA variants: RSA is insecure theoretically with 50\% leakage, practically it was insecure with 25\% leakage?
-
-Can we do it with an arbitrarily large fraction of leakage?
-
-General randomized encoding of secret key: increases length of storage, decreases efficiency.
-
-Public key encryption secure against memory leakage attacks.
+Is it possible to create public key encryption secure against memory leakage attacks with an arbitrarily large fraction of leakage? Yes, it is:
 
 \begin{theorem}
 For every $\varepsilon > 0$, there exists a public key encryption scheme that can tolerate $\lambda = (1 - \varepsilon)n$ leakage attacks.
