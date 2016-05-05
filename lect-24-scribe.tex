@@ -180,31 +180,16 @@ use of extractors.
 
 \section{Part 2: Only computation leaks}
 
-Want to identify a component $H$ that computes some elementary function, where we can implement any cryptographic algorithm securely when the adversary can run side channel attacks on the entire computation except for $H$. In fact we want more. Even, we can say we let the adversary run the entire executions himself, except for $H$.
+How can we compute privately in a setting where an eavesdropper can record any computations? One approach is to identify a small, simple function which, if computed on trusted hardware, would allow for carrying out the computation covertly. The particular abstraction we want is a \emph{one-time memory}.
 
-$H$ should be some universal component that can be plugged in to any algorithm. Also it should be simple.
+\begin{definition}
+A one-time memory stores two values $k_0$ and $k_1$. On input $b$, it outputs $k_b$ and deletes $k_{\neg b}$.
+\end{definition}
 
-This idea of $H$ also comes up in one-time programs. One-time programs are programs $P$ which can be run on a single input, but after it has been run once, it cannot be run again (particularly, can't be run on another input).
+The basic idea is that a one-time memory can stand in for oblivious transfer in our two-party computation protocol using Yao's garbled circuits (we refer back to previous notes on the details of circuit garbling). A nice feature of OTM is that for only computation leaks, we don't need any specialized hardware given fully homomorphic encryption. The computation only ever reads $k_b$, so no information is revealed about the other value stored in memory. And given the security properties of
+FHE, there is no way for an adversary to learn about the unencrypted values by looking at their encrypted counterparts. Furthermore, even if the adversary is powerful enough to read both keys stored in the OTM, we can still have some defence against this by encrypting them with a leakage-resilient scheme such as the QR one just discussed.
 
-Problem: Hardware is not a black box.
-
-We want this little box $H$ that does not leak to do very little computation (as little as possible). Rewrite programs in such a way such that we use $H$ as little as possible (ideally, we would not even need $H$ at all!)
-
-What is $H$? $H$ is a one-time memory unit (OTM). $H$ has two pieces of information in it: $k_0$ and $k_1$. It allows you to read one key, but then will erase the other key. Therefore, no computation is ever done on the key which is erased.
-
-\begin{theorem}
-(Under fully homomorphic encryption) Can compile any $f$ into one-time programs for $f$ where program = software + $H$. Use Yao's garbled circuits, and for every input wire, we will use OTMs to store the keys.
-\end{theorem}
-
-In the context of leakage resilient, one-time programs enable executions of any cryptographic functionality such that the adversary learns nothing but the output even if all secrets that are computed on are fully leaked.
-
-Turn executions of cryptographic algorithms into OTPs (one time programs). If we had a computation we want to run many times, even if someone is watching, I can prepare in advance representations of the computation, such that I can compute them online later on (analogy to the one time pad). E.G., if we want to be able to sign 100 messages in the presence of computation leaks, can prepare 100 OTPs in advance to accomplish this.
-
-In leakage resilience setting, we don't need secure hardware. And we don't want to have to prepare things in advance. Can we prepare work in a bounded amount of time, and later execute an unbounded amount of executions?
-
-The answer is that we have made some progress. Suppose we take the $H$ OTM memory cells, and we can encrypt their contents. We have garbled circuits, with the keys encrypted on the OTMs. Depending on whether the bit is $0, 1$, we take one of the keys from the OTM. Now when we need to decrypt the key from the OTM, we now need a secure leakage-resilient encryption algorithm for encrypting the keys that we put on the OTM.
-
-But in the first part of the talk, we only did it a bounded number of times, and here we would need unbounded.
+However, OTMs have some serious drawbacks. If we want to compute $N$ different functions, we will need to garble them all offline, which means we can only do a bounded amount of online computation before having to go offline again.
 
 
 % % % You should probably leave the below alone % % %
