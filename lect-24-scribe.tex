@@ -18,7 +18,13 @@
 %%% DATE OF THE LECTURE %%%
 \newcommand{\thedate}{May 4, 2016}
 
-  \usepackage [ n,advantage , operators , sets , adversary , landau , probability , notions , logic ,ff, mm,primitives , events , complexity , asymptotics , keys]{ cryptocode}      
+  \usepackage [ n,
+advantage , operators , sets , adversary , landau , probability , notions , logic ,
+ff, mm,
+primitives , events , complexity , asymptotics , keys
+]{ cryptocode}
+   
+   
 
 \newcommand{\bit}{\{0,1\}}
 \newcommand{\unif}[1]{\mathcal{U}\left( #1 \right)}
@@ -103,17 +109,20 @@ The idea in this model is that the adversary can recover ``noisy''' keys. Suppos
 
 We update the notion of semantic security to take into account the adversary's new capabilities. We're going to change it as follows: There is semantic security against a $\lambda$-memory attack if for any leakage function $L(\cdot)$, the adversary can't find $m_0$ and $m_1$ that can distinguish between the encryptions.
 
-Let $\keys_S = \bit^{n_{SK}}$ be the set of private keys, represented as bitstrings of length $n_SK$. We require for the measurement function $L : \keys_S \to \bit^n$ can only determine some number $\lambda(n_{SK})$ of the bits, that is, $n \le \lambda(n_{SK})$. This means that it is impossible for $L$ to uniquely determine the secret key. In fact, this requirement is just as strong as the requirement that there must be some entropy remaining in the secret key when conditioned on the observation of $L$.
+Let $\keys_S = \bit^{n_{SK}}$ be the set of private keys, represented as bitstrings of length $n_SK$. We require for the measurement function $L : \keys_S \to \bit^n$ can only determine some number $\lambda(n_{SK})$ of the bits, that is, $n < \lambda(n_{SK})$. This means that it is impossible for $L$ to uniquely determine the secret key. In fact, this requirement is just as strong as the requirement that there must be some entropy remaining in the secret key when conditioned on the observation of $L$.
 
 \begin{figure}
 \begin{center}
-\pseudocode{%\textbf{Adversary} \< \< \textbf{Challenger} \\[0.1\baselineskip ][\hline ]\<\< \\[-0.5\baselineskip ] 
+\pseudocode{%
+\textbf{Adversary} \< \< \textbf{Challenger} \\[0.1\baselineskip ][\hline ]
+\<\< \\[-0.5\baselineskip ] 
 \<\< (sk, pk) \gets \gen  \\
 \< \sendmessageleft*{pk} \< \\
 \< \sendmessageright*{L(\cdot)} \< \\
 \< \sendmessageleft*{L(sk)} \< \\
 \< \sendmessageright*{m_0, m_1} \< \\
-\< \sendmessageleft*{c = \enc(pk, m_b)} \<  b \sample \bit \\\< \sendmessageright*{b'} \< \\
+\< \sendmessageleft*{c = \enc(pk, m_b)} \<  b \sample \bit \\
+\< \sendmessageright*{b'} \< \\
 \< \text{Challenger wins when $b = b'$} \<}
  \end{center}
  \caption{Semantic security for public-key encryption with side-channels}
@@ -128,17 +137,16 @@ For every $\varepsilon > 0$, there exists a public key encryption scheme that ca
 \end{theorem}
 Constructions of such schemes use either lattice problems, Diffie-Hellman decisional intractability, or Quadratic Residuosity intractabilty.
 
-What makes these schemes leakage resilient?
+Most of these schemes share common features which make them leakage resilient. In previous models (which did not model side channels), public key cryptography was essentially based on having a public key $pk$ for which it is a hard problem to find the associated secret key $sk$.
 
-Let's imagine what a proof of security could look like. Old proofs of security: suppose we have a PK encryption scheme based on some hard problem. Suppose there's a leakage adversary, we want to show that we can solve the problem.
+In this model, the key idea is to have exponentially-many secret keys for each public key, and to ensure the following properties:
+\begin{itemize}
+\item All secret keys associated with a given public key can decrypted messages encrypted with that public key (correctness).
+\item Given the public key and one associated secret key, finding another secret key associated with that public key is intractable.
+\item Given the public key $pk$ and some fraction of the bits for an associated secret key $sk$, it is intractable to output the exact secret key $sk$ with non-negligible probability.
+\end{itemize}
 
-Start with a public key $pk$ for which it is a hard problem to find the secret key $sk$.
-
-New paradigm: Instead of having one secret key, we will have one public key, and many secret keys for a single public key. Why is this helpful? Suppose that we did have this property. Exponentially many secret keys for a given single public key. Correctness: All of the secret keys can decrypt correctly. But, want to make it so that given one secret key, it should be hard computationally to find any other secret key.
-
-Giving bounded leakage about any single secret key is not enough to point to it, so adversary with likely output another one. Then, if the adversary does succeed, he almost surely successfully outputs a different secret key from the one which the challenger does not already know, and so together they have solved the computationally hard problem of finding another secret key from one given secret key.
-
-If an adversary could find a secret key, then we violate
+The last two properties work together to provide security in the following way. Given bounded leakage about any single secret key does not give the adversary enough information to single out that particular secret key. Therefore, if the adversary does succeed, the adversary must almost surely output a different secret key associated to the same public key. In this case, the challenger and adversary have contradicted the second property listed above, that given one secret key, it is intractable to find another with the same associated public key.
 
 \section{QR-based encryption scheme}
 
