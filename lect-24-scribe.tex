@@ -55,22 +55,18 @@
 \item Reductionist security proofs from computational assumptions to secure primitives
 \end{itemize}
 
-\section{Basic crypto axioms}
+So far in the class, the cryptographic protocols and constructions that we have considered have used the following assumptions:
 \begin{itemize}
-\item Algorithms public
+\item Algorithms are public
 \item Private keys are perfectly secret and random
-\item Crypto computations are opaque to an adversary
+\item Cryptographic computations are opaque to an adversary
 \end{itemize}
 
-If you have a secret key and are a computer, the adversary doesn't see it.
+For instance, a secret key that is stored on one's computer cannot be observed by an adversary. However, the above assumptions do not hold in many real-life settings, because computations ``leak.''
 
-Apparently, these assumptions do not hold in many real-life settings.
+When computations run on a computer, they consume power, and emit noise as well as radiation. If there's someone who can measure how much time the computation takes, how much heat the computer generates (such as by detecting changes in temperature in the nearby environment), this can give you information about the secret keys. 
 
-Main problem: computations leak.
-
-Whenever you do computation on your computer, you're using power, emitting radiation from the screen, and so forth, and if there's someone out there who can measure how much time you take, how much heat you use, how the temperature in the environment has changed, this can give you information about the secret keys. Any computation can leak information.
-
-It's possible to translate physical observations into attacks on the security of cryptographic schemes. Our proofs in the class so far don't take into account these considerations.
+It's possible to translate physical observations into attacks on the security of cryptographic schemes. Our proofs in the class so far have not taken into account these considerations.
 
 Even if you don't compute at all, there are cold boot attacks. If your computer powered down, and someone gets a hold of it, before too long, they can look at the memory and recovery secret keys. History is maintained on the computer! Even if you thought you got rid of things, you may not have.
 
