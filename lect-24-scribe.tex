@@ -51,9 +51,9 @@
 
 So far in the class, the cryptographic protocols and constructions that we have considered have used the following assumptions:
 \begin{itemize}
-\item Algorithms are public
-\item Private keys are perfectly secret and random
-\item Cryptographic computations are opaque to an adversary
+\item Algorithms are public.
+\item Private keys are perfectly secret and random.
+\item Cryptographic computations are opaque to an adversary.
 \end{itemize}
 
 These common assumptions provide a rich theory based on reductionist security proofs from computational assumptions to secure primitives. And so far in this class, we have explored a variety of computational notions within this framework, and found some surprising abilities (such as public key cryptography, homomorphic encryption, etc.).
@@ -82,30 +82,17 @@ Work modeling side-channel attacks is highly technical, so this lecture provides
 
 We now present a mathematical model side-channel attacks (computation time, power, etc.). Later, we will discuss the addition of secure hardware assumptions to cryptographic assumptions. The goal will be to use the same computational assumptions as before, and to minimize the use of secure hardware.
 
-The new model:
+There are a variety of ways to model side-channel attacks. All of the models generally maintain the notion of a PPT adversary $A$. In addition to $A$'s computational abilities, $A$ is allowed to make measurements $L(\cdot)$ on the internal state of a computation. Models differ in what restrictions are imposed on the measurement function $L$:
 
-Still have a PPT adversary $A$. But $A$ can also make measurements. $A$ can choose any function $L$ which is a function of the internal state of the computation. $L$ must come from some restricted class (if $L$ were the identity function, we could just steal the secret key directly).
+\begin{itemize}
+\item What does $L$ really have access to? Possible choices include the entire state of the computation, or only a certain amount of internal state, or perhaps only contents of the cache. In the \emph{memory leakage} (ML) class of models, we have \emph{global measurements}, where $L$ applies to the entire memory. In contrast, with the \emph{only computation} (OC) class of models, we have only \emph{local measurements}, so $L$ can only be applied to memory that is being used in the current computation step.
+\item What complexity class does $L$ come from? $L$ may be required to be a polynomial-time algorithm or representable by a ``low-depth'' circuit.
+\item How many measurements can $L$ make? In \emph{bounded leakage} models, it can only measure once, or a limited number of times. In \emph{continual leakage} models, there is no bound on the number of times that measurements can be made. However, it is possible to prevent information leakage by erasing memory contents. For instance, a scheme secure against a continual leakage model might use the same public key, but keep changing secret keys, and erasing previous ones, so that an adversary cannot fully determine a single secret key.
+\item When is $L$ chosen? Before or after the public key is chosen?
+\item Is there noise in the measurement of $L$? For instance, it could be modeled as a random variable which is only biased towards the actual internal state.
+\end{itemize}
 
-The models differ:
-- What does $L$ really have access to? The entire state of the computation? Only a certain amount of internal state? Only things that are in the cache?
-- What complexity class does $L$ come from?
-- Perhaps $L$ must be polynomial time, ``low depth''.
-- How many measurements? Can measure once, or every once in a while?
-- When is $L$ chosen? Before or after the public key is chosen?
-
-ML: Global measurements
-$L$ applies to the \emph{entire} memory
-
-OC: Local measurements
-$L$ can \emph{only} be applied to memory that is being applied in the current computation step
-
-Bounded leakage: Can measure once, or a limited number of times
-
-Continual leakage: You aren't bounded in how many times you can measure. BUT, you don't leak the entire memory, because you can erase things in your memory. So for instance, you can use the same public key, but keep changing secret keys, erasing previous ones, so you can never fully determine a single secret key.
-
-What is the quality of information that $L$ leaks? Doesn't need to be perfect. Maybe it is just a random variable biased in the direction of the correct answer.
-
-\section{Part 1: Bounded memory leakage (ML)}
+\section{Bounded memory leakage (ML)}
 
 How to design public key encryption where someone can measure the secret key a bounded number of times?
 
