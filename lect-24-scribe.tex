@@ -47,13 +47,7 @@
 	\item Send us your source (.tex) files, and a compiled file as as a PDF. (By email: {\tt 6.875-ta-sp16@mit.edu})
 \end{itemize}
 
-\section{Modern theoretical cryptography}
-
-\begin{itemize}
-\item Computational notions
-\item Surprising abilities
-\item Reductionist security proofs from computational assumptions to secure primitives
-\end{itemize}
+\section{Side-channel attacks (introduction)}
 
 So far in the class, the cryptographic protocols and constructions that we have considered have used the following assumptions:
 \begin{itemize}
@@ -62,46 +56,35 @@ So far in the class, the cryptographic protocols and constructions that we have 
 \item Cryptographic computations are opaque to an adversary
 \end{itemize}
 
+These common assumptions provide a rich theory based on reductionist security proofs from computational assumptions to secure primitives. And so far in this class, we have explored a variety of computational notions within this framework, and found some surprising abilities (such as public key cryptography, homomorphic encryption, etc.).
+
 For instance, a secret key that is stored on one's computer cannot be observed by an adversary. However, the above assumptions do not hold in many real-life settings, because computations ``leak.''
 
 When computations run on a computer, they consume power, and emit noise as well as radiation. If there's someone who can measure how much time the computation takes, how much heat the computer generates (such as by detecting changes in temperature in the nearby environment), this can give you information about the secret keys. 
 
-It's possible to translate physical observations into attacks on the security of cryptographic schemes. Our proofs in the class so far have not taken into account these considerations.
+It's possible to translate physical observations into attacks on the security of cryptographic schemes. Our proofs in the class so far have not taken into account these considerations. Attacks include:
 
-Even if you don't compute at all, there are cold boot attacks. If your computer powered down, and someone gets a hold of it, before too long, they can look at the memory and recovery secret keys. History is maintained on the computer! Even if you thought you got rid of things, you may not have.
+\begin{itemize}
+\item \emph{Cold boot attacks} are attacks on computers which are not running. If a computer is inspected not longer after it is shut off, the memory may still retain information, and so it is possible to recover secret keys.
+\item Garfinkle \cite{garfinkel2003} looked at \emph{erased hard disks} and was able to recover lots of forensic information.
+\item \emph{Shared sources of randomness}: Often, there is reuse of secret keys across different cryptographic applications. Using access to many cryptographic public keys, where the private keys are correlated with each other (due to a shared source of randomness), it may be possible to defeat cryptographic security.
+\item \emph{Timing attacks} glean information by measuring how much time a computation takes. For instance, one can, by observing how much time an RSA signing scheme takes, learn about the RSA exponent (given that signing is performed via repeated squaring with the exponent, and some exponents will take longer than others).
+\item \emph{Power consumption attacks} measure the power consumed while performing cryptographic operations.
+\end{itemize}
 
-Garfunkle looked at erased disks and was able recover lots of forensic information.
+There are countermeasures meant to prevent side-channel attacks such as those listed above. There are both hardware and software countermeasures. In hardware, it is possible to shield components to make it difficult to measure the emission of radiation or heat. In software, it is possible to try to fix the timing of cryptographic operations, to use oblivious RAM, and to use various other heuristics to prevent leakage of information through side-channels.
 
-Information about secret keys is available, sometimes do to re-use of secret keys across crypto applications. If someone has access to a lot of your cryptographic public keys, and if the private keys are correlated to each other (due to a shared source of randomness), it may be possible to break crypto.
+Can we use more \emph{theory} at design time to battle reality? Can we do cryptography assuming \emph{no} secrecy? Maybe we don't need secret keys at all. Maybe everything can be public, and we can still do public key encryption, secure computation, and so on. \emph{Obfuscation} attempts to answer this question. In this lecture, we can't do away with all secrecy, but can reduce the amount of secrecy required.
 
-Countermeasures:
+Approaching side-channel attacks from a theoretical angle, we explicitly model side-channel attacks. We can then try to build modified schemes which are secure with respect to this model, and even try to construct general compilers for protocols secure against these models from protocols which are secure under classical cryptographic assumptions.
 
-In hardware: Shield things such as radiation or heat leakage. Using very weak devices you could get on eBay for cheap, he can break your scheme, just from the fact that you are grounding your computer. Could even break crypto just with a smartphone listening to the whirring of a computer's motherboard from 3 feet away.
+Work modeling side-channel attacks is highly technical, so this lecture provides only a glimpse. So far, the results have questionable benefit. Schemes often only provide security against a fixed fraction of leakage. So a scheme may be secure against leaking 90\% of the secret key, but to be secure against 95\% leakage, a completely different scheme may be required.
 
-Timing attack: looking at how much time RSA signing scheme to figure out the exponent by seeing how much time it takes for the signing to complete (since larger exponents take more time, done with repeated squaring).
-
-In software: fixed timing, oblivious RAM, many heuristics
-
-Can we use more theory in design time to battle reality? Can we do cryptography assuming NO secrecy? Maybe we don't need secret keys at all. Maybe everything can be public, and we can still do public key encryption, secure computation, and so on.
-
-We can go a long way. We can't do away with all secrecy, but can reduce the amount of secrecy required.
-
-Theoretical work:
-- How to model these attacks?
-- Modify scheme at design time
-- Construct general compilers from classical secure protocols into ones secure against leaking attacks
-
-These works are highly technical, so we're only getting a glimpse. But this stuff is of questionable benefit. We imagine that there's some fraction of leakage that can take place; suppose 90\% of the key is leaked. But if 95\% is leaked, you need to change your scheme.
-
-Recipe: Model attacks, define security, implement crypto primitive.
-
-Now, we will mathematically model side-channel attacks (computation time, power, etc.). Sometimes we will add secure hardware assumptions to cryptographic assumptions.
-
-Challenges: don't increase computational assumptions, and minimize the use of secure hardware. You have to build secure hardware, believe it's secure. Nothing is 100\% satisfactory here. Obfuscation would be 100\% satisfactory, if it existed.
+We now present a mathematical model side-channel attacks (computation time, power, etc.). Later, we will discuss the addition of secure hardware assumptions to cryptographic assumptions. The goal will be to use the same computational assumptions as before, and to minimize the use of secure hardware.
 
 The new model:
 
-Still have a PPT advesary $A$. But $A$ can also make measurements. $A$ can choose any function $L$ which is a function of the internal state of the computation. $L$ must come from some restricted class (if $L$ were the identity function, we could just steal the secret key directly).
+Still have a PPT adversary $A$. But $A$ can also make measurements. $A$ can choose any function $L$ which is a function of the internal state of the computation. $L$ must come from some restricted class (if $L$ were the identity function, we could just steal the secret key directly).
 
 The models differ:
 - What does $L$ really have access to? The entire state of the computation? Only a certain amount of internal state? Only things that are in the cache?
