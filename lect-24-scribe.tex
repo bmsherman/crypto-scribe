@@ -1,0 +1,260 @@
+
+\documentclass[10pt]{article}
+\usepackage{amsfonts,amsthm,amsmath,amssymb}
+\usepackage{array}
+\usepackage{epsfig}
+\usepackage[
+  margin=1.5cm,
+  includefoot,
+  footskip=30pt,
+]{geometry}
+
+%%% YOUR NAMES GO HERE %%%
+\newcommand{\scribes}{Eric Atkinson, Ben Sherman}
+%%% LECTURE NUMBER %%%
+\newcommand{\lecnumber}{24}
+%%% TITLE OF THE LECTURE %%%
+\newcommand{\lectitle}{Cryptography when secrecy is hard to find (leakage resistance)}
+%%% DATE OF THE LECTURE %%%
+\newcommand{\thedate}{May 4, 2016}
+
+\newcommand{\bit}{\{0,1\}}
+\newcommand{\unif}[1]{\mathcal{U}\left( #1 \right)}
+\newcommand{\Prob}[1]{\text{Pr}\left[ {#1} \right]}
+\newcommand{\given}{\ |\ }
+\newcommand{\suchthat}{\given}
+\newcommand{\nat}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\bool}{\mathbb{B}}
+\newcommand{\cat}{\ ||\ }
+\newcommand{\then}{\ ;\ }
+
+\begin{document}
+\input{scribe-template-preamble.tex}
+
+\handout{6.875J/18.425J Cryptography and Cryptanalysis}
+{\thedate}
+{Instructor: Shafi Goldwasser}
+{Scribes: \scribes}
+{Lecture \lecnumber: \lectitle}
+{\lecnumber}
+
+%%%% body goes in here %%%%
+\section{Non-comprehensive Instructions}
+\begin{itemize}
+	\item Finish a first draft of the scribe notes by the day after lecture (i.e. Wednesday lecture $\rightarrow$ draft by Thursday night).
+	\item Send us your source (.tex) files, and a compiled file as as a PDF. (By email: {\tt 6.875-ta-sp16@mit.edu})
+\end{itemize}
+
+\section{Modern theoretical cryptography}
+
+\begin{itemize}
+\item Computational notions
+\item Surprising abilities
+\item Reductionist security proofs from computational assumptions to secure primitives
+\end{itemize}
+
+\section{Basic crypto axioms}
+\begin{itemize}
+\item Algorithms public
+\item Private keys are perfectly secret and random
+\item Crypto computations are opaque to an adversary
+\end{itemize}
+
+If you have a secret key and are a computer, the adversary doesn't see it.
+
+Apparently, these assumptions do not hold in many real-life settings.
+
+Main problem: computations leak.
+
+Whenever you do computation on your computer, you're using power, emitting radiation from the screen, and so forth, and if there's someone out there who can measure how much time you take, how much heat you use, how the temperature in the environment has changed, this can give you information about the secret keys. Any computation can leak information.
+
+It's possible to translate physical observations into attacks on the security of cryptographic schemes. Our proofs in the class so far don't take into account these considerations.
+
+Even if you don't compute at all, there are cold boot attacks. If your computer powered down, and someone gets a hold of it, before too long, they can look at the memory and recovery secret keys. History is maintained on the computer! Even if you thought you got rid of things, you may not have.
+
+Garfunkle looked at erased disks and was able recover lots of forensic information.
+
+Information about secret keys is available, sometimes do to re-use of secret keys across crypto applications. If someone has access to a lot of your cryptographic public keys, and if the private keys are correlated to each other (due to a shared source of randomness), it may be possible to break crypto.
+
+Countermeasures:
+
+In hardware: Shield things such as radiation or heat leakage. Using very weak devices you could get on eBay for cheap, he can break your scheme, just from the fact that you are grounding your computer. Could even break crypto just with a smartphone listening to the whirring of a computer's motherboard from 3 feet away.
+
+Timing attack: looking at how much time RSA signing scheme to figure out the exponent by seeing how much time it takes for the signing to complete (since larger exponents take more time, done with repeated squaring).
+
+In software: fixed timing, oblivious RAM, many heuristics
+
+Can we use more theory in design time to battle reality? Can we do cryptography assuming NO secrecy? Maybe we don't need secret keys at all. Maybe everything can be public, and we can still do public key encryption, secure computation, and so on.
+
+We can go a long way. We can't do away with all secrecy, but can reduce the amount of secrecy required.
+
+Theoretical work:
+- How to model these attacks?
+- Modify scheme at design time
+- Construct general compilers from classical secure protocols into ones secure against leaking attacks
+
+These works are highly technical, so we're only getting a glimpse. But this stuff is of questionable benefit. We imagine that there's some fraction of leakage that can take place; suppose 90\% of the key is leaked. But if 95\% is leaked, you need to change your scheme.
+
+Recipe: Model attacks, define security, implement crypto primitive.
+
+Now, we will mathematically model side-channel attacks (computation time, power, etc.). Sometimes we will add secure hardware assumptions to cryptographic assumptions.
+
+Challenges: don't increase computational assumptions, and minimize the use of secure hardware. You have to build secure hardware, believe it's secure. Nothing is 100\% satisfactory here. Obfuscation would be 100\% satisfactory, if it existed.
+
+The new model:
+
+Still have a PPT advesary $A$. But $A$ can also make measurements. $A$ can choose any function $L$ which is a function of the internal state of the computation. $L$ must come from some restricted class (if $L$ were the identity function, we could just steal the secret key directly).
+
+The models differ:
+- What does $L$ really have access to? The entire state of the computation? Only a certain amount of internal state? Only things that are in the cache?
+- What complexity class does $L$ come from?
+- Perhaps $L$ must be polynomial time, ``low depth''.
+- How many measurements? Can measure once, or every once in a while?
+- When is $L$ chosen? Before or after the public key is chosen?
+
+ML: Global measurements
+$L$ applies to the \emph{entire} memory
+
+OC: Local measurements
+$L$ can \emph{only} be applied to memory that is being applied in the current computation step
+
+Bounded leakage: Can measure once, or a limited number of times
+
+Continual leakage: You aren't bounded in how many times you can measure. BUT, you don't leak the entire memory, because you can erase things in your memory. So for instance, you can use the same public key, but keep changing secret keys, erasing previous ones, so you can never fully determine a single secret key.
+
+What is the quality of information that $L$ leaks? Doesn't need to be perfect. Maybe it is just a random variable biased in the direction of the correct answer.
+
+\section{Part 1: Bounded memory leakage (ML)}
+
+How to design public key encryption where someone can measure the secret key a bounded number of times?
+
+Memory retains its content after power is lost. Contents in RAM decay slowly; last for several minutes.
+
+Can recover ``noisy''' keys. Say you're using RSA, and you have stored in memory the decryption exponent $d$ (where $d e = 1 \mod \varphi(n)$). You can' see $d$ exactly, but can see a noisy version of $d$. We want to deal with this kind of attack.
+
+Update the notion of semantic security to take into account the adversary's new capabilities. We're going to change it as follows: There is semantic security against a $\lambda$-memory attack if for any leakage function $L(\cdot)$, the adversary can't find $m_0$ and $m_1$ that can distinguish between the encryptions.
+
+The restriction is that $L : SK \to \bit^n$ such that $n = |L(SK)| < \lambda(|SK|)$. This forces that there is some entropy left in the secret key. In fact, this is just a strong as simply requiring that there is some entropy left in the secret key.
+
+RSA variants: RSA is insecure theoretically with 50\% leakage, practically it was insecure with 25\% leakage?
+
+Can we do it with an arbitrarily large fraction of leakage?
+
+General randomized encoding of secret key: increases length of storage, decreases efficiency.
+
+Public key encryption secure against memory leakage attacks.
+
+\begin{theorem}
+For every $\varepsilon > 0$, there exists a public key encryption scheme that can tolerate $\lambda = (1 - \varepsilon)n$ leakage attacks.
+\end{theorem}
+They use either lattice problems, Diffie-Hellman decisional intractability, or Quadratic Residuosity intractabilty.
+
+What makes these schemes leakage resilient?
+
+Let's imagine what a proof of security could look like. Old proofs of security: suppose we have a PK encryption scheme based on some hard problem. Suppose there's a leakage adversary, we want to show that we can solve the problem.
+
+Start with a public key $pk$ for which it is a hard problem to find the secret key $sk$.
+
+Adversary            Challenger
+<- PK
+-> L
+<- L(SK)
+-> ($m_0, m_1$)
+Challenger flips random bit $b$
+<- Enc($m_b$)
+-> b'
+Does (b == b')?
+
+New paradigm: Instead of having one secret key, we will have one public key, and many secret keys for a single public key. Why is this helpful? Suppose that we did have this property. Exponentially many secret keys for a given single public key. Correctness: All of the secret keys can decrypt correctly. But, want to make it so that given one secret key, it should be hard computationally to find any other secret key.
+
+Giving bounded leakage about any single secret key is not enough to point to it, so adversary with likely output another one. Then, if the adversary does succeed, he almost surely successfully outputs a different secret key from the one which the challenger does not already know, and so together they have solved the computationally hard problem of finding another secret key from one given secret key.
+
+If an adversary could find a secret key, then we violate
+
+\section{QR-based encryption scheme}
+
+Parameters: a blum integer $N$ where \emph{no one} knows the factorization.
+: a polynomial paramter $\ell$ which determines how much leakage there will be
+
+Key generation:
+$sk$ is an $\ell$-bit random string $s_1, \ldots, s_\ell$
+$pk$ includes a random $g_1, \ldots, g_\ell \in QR_N$ and some $h = \prod g_i^{-s_i}$, i.e., $h$ is a product of a random subset of the $g$'s. The secret key has no structure! It's just a random $\ell$-bit string
+
+To encrypt a message $m \in \bit$, we sample $r \leftarrow [N^2]$ and output $c = (g_1^r, \ldots, g_\ell^r, (-1)^mh^r)$.
+
+Why $r$ in $[N^2]$ If we use a large enough interval, then it will come close enough to looking like it comes from $\varphi(N)$. 
+
+Want to take $r \in [1, \ldots, |QR_N|]$ but can't computer $|QR_N|$ since this is $\phi(N)/4)$ or something like this [[need to check correctness].
+
+Decryption:
+
+To decrypt $c = (c_1, \ldots, c_\ell, c_0)$, compute $c_0 \prod c_i^{s_i} = (-1)^m$. It's very similar to what was going on in El Gamal.
+
+Remark 1: There are exponentially many secret keys which match the public key, for $\ell$ large enough. In fact, for the right choice of $\ell$, the $h$ will be very close to a uniform distribution; this follows from the leftover hash lemma. 
+
+[[Put a good description of the Leftover Hash Lemma here:
+
+Definition of a 2-universal hash family for $X \to Y$, and the theorem of the leftover hash lemma]]
+
+Take $\ell > 3 \log |G|$ using the uniform hash lemma.
+
+LHL tells us that $h$ gives us almost no information about $s$. So even if we give a bounded amount of information about $h$, it will tell very little about $s$.
+
+Remark 2: Multiplying by $h^r$ is indistinguishable from uniform.  Depends on the notion of min-entropy:
+
+$X$ distribution over $\bit^n$
+\[
+H_1(X) = -\log \max \Prob{X = x},
+\]
+that is, $\Prob{X = x} < 2^{-k}$ for all $x$.
+
+$X$ is $k$-source of entropy if $H(X) > k$.
+
+In the context of the encryption scheme, we can view the secret key as an \emph{entropy source}. I have a secret key. I leak some of it, it should still have entropy left in it.
+
+Extractor: a procedure which starts with a $k$-source, and takes a truly random seed to produce many almost-uniform bits.
+
+In the context of encryption, $h^r$ should be thought of as an extractor step. It is a randomness extractor, and is indistinguishable from uniform.
+\[
+h^r = \prod g_i^{s_i r}
+\]
+[[check is this right??]]
+
+All schemes which we know which are leakage-resilient work this way: Can view things as extractors.
+
+\section{Part 2: Only computation leaks}
+
+Want to identify a component $H$ that computes some elementary function, where we can implement any cryptographic algorithm securely when the adversary can run side channel attacks on the entire computation except for $H$. In fact we want more. Even, we can say we let the adversary run the entire executions himself, except for $H$.
+
+$H$ should be some universal component that can be plugged in to any algorithm. Also it should be simple.
+
+This idea of $H$ also comes up in one-time programs. One-time programs are programs $P$ which can be run on a single input, but after it has been run once, it cannot be run again (particularly, can't be run on another input).
+
+Problem: Hardware is not a black box.
+
+We want this little box $H$ that does not leak to do very little computation (as little as possible). Rewrite programs in such a way such that we use $H$ as little as possible (ideally, we would not even need $H$ at all!)
+
+What is $H$? $H$ is a one-time memory unit (OTM). $H$ has two pieces of information in it: $k_0$ and $k_1$. It allows you to read one key, but then will erase the other key. Therefore, no computation is ever done on the key which is erased.
+
+\begin{theorem}
+(Under fully homomorphic encryption) Can compile any $f$ into one-time programs for $f$ where program = software + $H$. Use Yao's garbled circuits, and for every input wire, we will use OTMs to store the keys.
+\end{theorem}
+
+In the context of leakage resilient, one-time programs enable executions of any cryptographic functionality such that the adversary learns nothing but the output even if all secrets that are computed on are fully leaked.
+
+Turn executions of cryptographic algorithms into OTPs (one time programs). If we had a computation we want to run many times, even if someone is watching, I can prepare in advance representations of the computation, such that I can compute them online later on (analogy to the one time pad). E.G., if we want to be able to sign 100 messages in the presence of computation leaks, can prepare 100 OTPs in advance to accomplish this.
+
+In leakage resilience setting, we don't need secure hardware. And we don't want to have to prepare things in advance. Can we prepare work in a bounded amount of time, and later execute an unbounded amount of executions?
+
+The answer is that we have made some progress. Suppose we take the $H$ OTM memory cells, and we can encrypt their contents. We have garbled circuits, with the keys encrypted on the OTMs. Depending on whether the bit is $0, 1$, we take one of the keys from the OTM. Now when we need to decrypt the key from the OTM, we now need a secure leakage-resilient encryption algorithm for encrypting the keys that we put on the OTM.
+
+But in the first part of the talk, we only did it a bounded number of times, and here we would need unbounded.
+
+
+% % % You should probably leave the below alone % % %
+\nocite{*}
+\bibliographystyle{alpha}
+\bibliography{lect-24-scribe}
+\end{document}
