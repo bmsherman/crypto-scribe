@@ -18,6 +18,8 @@
 %%% DATE OF THE LECTURE %%%
 \newcommand{\thedate}{May 4, 2016}
 
+  \usepackage [ n,advantage , operators , sets , adversary , landau , probability , notions , logic ,ff, mm,primitives , events , complexity , asymptotics , keys]{ cryptocode}      
+
 \newcommand{\bit}{\{0,1\}}
 \newcommand{\unif}[1]{\mathcal{U}\left( #1 \right)}
 \newcommand{\Prob}[1]{\text{Pr}\left[ {#1} \right]}
@@ -101,32 +103,36 @@ The idea in this model is that the adversary can recover ``noisy''' keys. Suppos
 
 We update the notion of semantic security to take into account the adversary's new capabilities. We're going to change it as follows: There is semantic security against a $\lambda$-memory attack if for any leakage function $L(\cdot)$, the adversary can't find $m_0$ and $m_1$ that can distinguish between the encryptions.
 
-Let $\keys_S$ be the set of private keys. We require for the measurement function $L : \keys_S \to \bit^n$ can only determine a fraction $\lambda$ of the bits, that is, $n \le \lambda \lg |\keys_S|$, or if the space of private keys is bitvectors of length $n_{SK}$, i.e., $\keys_S = \bit^{n_{SK}}$, then $n \le \lambda n_{SK}$. This means that it is impossible for $L$ to uniquely determine the secret key. In fact, this requirement is just as strong as the requirement that there must be some entropy remaining in the secret key when conditioned on the observation of $L$.
+Let $\keys_S = \bit^{n_{SK}}$ be the set of private keys, represented as bitstrings of length $n_SK$. We require for the measurement function $L : \keys_S \to \bit^n$ can only determine some number $\lambda(n_{SK})$ of the bits, that is, $n \le \lambda(n_{SK})$. This means that it is impossible for $L$ to uniquely determine the secret key. In fact, this requirement is just as strong as the requirement that there must be some entropy remaining in the secret key when conditioned on the observation of $L$.
+
+\begin{figure}
+\begin{center}
+\pseudocode{%\textbf{Adversary} \< \< \textbf{Challenger} \\[0.1\baselineskip ][\hline ]\<\< \\[-0.5\baselineskip ] 
+\<\< (sk, pk) \gets \gen  \\
+\< \sendmessageleft*{pk} \< \\
+\< \sendmessageright*{L(\cdot)} \< \\
+\< \sendmessageleft*{L(sk)} \< \\
+\< \sendmessageright*{m_0, m_1} \< \\
+\< \sendmessageleft*{c = \enc(pk, m_b)} \<  b \sample \bit \\\< \sendmessageright*{b'} \< \\
+\< \text{Challenger wins when $b = b'$} \<}
+ \end{center}
+ \caption{Semantic security for public-key encryption with side-channels}
+ \end{figure}
 
 Most contemporary protocols are not very secure with respect to this model. RSA is theoretically secure with up to 50\% leakage, but practically found insecure with as little as 25\% leakage. AES is insecure against 85\% leakage.
 
 Is it possible to create public key encryption secure against memory leakage attacks with an arbitrarily large fraction of leakage? Yes, it is:
 
 \begin{theorem}
-For every $\varepsilon > 0$, there exists a public key encryption scheme that can tolerate $\lambda = (1 - \varepsilon)n$ leakage attacks.
+For every $\varepsilon > 0$, there exists a public key encryption scheme that can tolerate $\lambda(n_{SK}) = (1 - \varepsilon)n_{SK}$ leakage attacks.
 \end{theorem}
-They use either lattice problems, Diffie-Hellman decisional intractability, or Quadratic Residuosity intractabilty.
+Constructions of such schemes use either lattice problems, Diffie-Hellman decisional intractability, or Quadratic Residuosity intractabilty.
 
 What makes these schemes leakage resilient?
 
 Let's imagine what a proof of security could look like. Old proofs of security: suppose we have a PK encryption scheme based on some hard problem. Suppose there's a leakage adversary, we want to show that we can solve the problem.
 
 Start with a public key $pk$ for which it is a hard problem to find the secret key $sk$.
-
-Adversary            Challenger
-<- PK
--> L
-<- L(SK)
--> ($m_0, m_1$)
-Challenger flips random bit $b$
-<- Enc($m_b$)
--> b'
-Does (b == b')?
 
 New paradigm: Instead of having one secret key, we will have one public key, and many secret keys for a single public key. Why is this helpful? Suppose that we did have this property. Exponentially many secret keys for a given single public key. Correctness: All of the secret keys can decrypt correctly. But, want to make it so that given one secret key, it should be hard computationally to find any other secret key.
 
