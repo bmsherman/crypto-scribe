@@ -150,6 +150,8 @@ The last two properties work together to provide security in the following way. 
 
 \section{QR-based encryption scheme}
 
+We an define a system that is resilient against secret key leaks using the quadratic residuosity problem. The encryption scheme is as follows:
+\\
 
 \textbf{Setup:} Choose a Blum integer $N$ such that no party knows the factorization. Let $\ell$ be a parameter for the amount of leakage.
 
@@ -157,21 +159,26 @@ The last two properties work together to provide security in the following way. 
 
 \textbf{Encryption:} Randomly sample $r \leftarrow \mathbb{Z} \cap [0,N^2]$. For a message $m \in \{0,1\}$ and public key $(g_1,\dots,g_\ell,h)$, compute the ciphertext $c = (g_1^r,\dots,g_\ell^r,(-1)^m h^r)$. 
 
-\textbf{Decryption:} Given the ciphertext $(c_1,\dots,c_\ell,c_0)$ and secret key $(s_1,\dots,s_\ell)$, compute $m = c_0 \prod_{i=1}^\ell c_i^{s_i}$.
+\textbf{Decryption:} Given the ciphertext $(c_1,\dots,c_\ell,c_0)$ and secret key $(s_1,\dots,s_\ell)$, compute $c_0 \prod_{i=1}^\ell c_i^{s_i}$. Return $0$ if this is $1$, or $1$ if this is $-1$.
+\\
 
 Note that we chose $r$ from a set of size $N^2$, not $N$. The reason for this is ideally we would choose $r$ from a set the same size as $QR_N$, but we can't compute $|QR_N|$ without the factorization of $N$. Choosing $r$ from a set of size $N^2$ gets us close enough.
 
-\textbf{Remark 1:} There are exponentially many secret keys which match the public key, for $\ell$ large enough. In fact, for the right choice of $\ell$, the $h$ will be very close to a uniform distribution; this follows from the leftover hash lemma. 
+The correctness of this scheme is fairly easy to see. The value we compute in decryption is exactly $$(-1)^m h^r \prod_{i=1}^\ell g_i^{s_i r}$$ $$ = (-1)^m \prod_{i=1}^\ell g_i^{s_i r - s_i r}$$ $$ = (-1)^m$$
+
+We remark here that there are exponentially many secret keys which match the public key, for $\ell$ large enough. In fact, for the right choice of $\ell$, the $h$ will be very close to a uniform distribution; this follows from the leftover hash lemma. First, we recall the definition for a 2-universal hash function or pairwise hash function:
 
 \begin{definition}
-$H$ is a 2-universal hash family for $\mathcal{X} \rightarrow \mathcal{Y}$ if $\forall x,y \; \Pr_{h \leftarrow H}(h(x) = h(y)) = \frac{1}{|\mathcal{Y}|}$.
+$H$ is a 2-universal hash function family for $\mathcal{X} \rightarrow \mathcal{Y}$ if $\forall x \neq y \; \Pr_{h \leftarrow H}(h(x) = h(y)) = \frac{1}{|\mathcal{Y}|}$.
 \end{definition}
 
+The key here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This follows from the fact that the $g_i$ are chosen uniformly at random, so their product must be uniform at random except for the degenerate case where all the $x_i$ are $0$. However, this cannot happen for both $x$ and $y$ if $x \neq y$.
+
 \begin{lemma}
-The leftover hash lemma. If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$, $\mathcal{L} \in \mathcal{X} \rightarrow \mathcal{Y}$, $(h,h(x),L(x)) \approx (h,y,L(x))$, where $h \leftarrow H$ and $y \leftarrow \mathcal{Y}$.
+The leftover hash lemma. If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$, $\mathcal{L} \in \mathcal{X} \rightarrow \mathcal{Y}$, $(h,h(x)) \approx (h,y)$, where $h \leftarrow H$ and $y \leftarrow_U \mathcal{Y}$.
 \end{lemma}
 
-The claim here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx (g_1,\dots,g_\ell,U)$.
+This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx (g_1,\dots,g_\ell,U)$.
 
 \begin{definition}
 Min-entropy. For a probability distribution $X$, we can define the min-entropy as $H_1(X) = -\log \max_x \Pr(X = x)$. We say a random source is a $k$-source if $H_1(X) > k \iff \forall x \Pr(X = x) < 2^{-k}$.
@@ -183,19 +190,27 @@ An extractor is a function $\mathrm{Ext}(x,r)$, where $x$ comes from a $k$-sourc
 
 We can futher refine the definition of an extractor to require it to output nearly uniform bits even when the random seed is exposed. The leftover hash lemma states that we can build these strong extractors out of 2-universal hash functions.
 
-\textbf{Remark 2:} We can view the secret key as an entropy source, where leaking more bits of the secret key will result in worse bounds on the entropy. We can then design our encryption algorithm to act as a randomness extractor from the secret key and a random seed $r$: $\mathrm{Enc} = \mathrm{Ext}(sk,r) \oplus m$. In our case, $h^r = \prod_{i=1}^\ell g_i^{s_i r}$ serves as the extractor, so $h^r$ is indistinguishable from uniform. All schemes which we know which are leakage-resilient make
+Now, because some part of the key will leak, we can view the secret key as a $(1-\epsilon)n$-source, where leaking more bits of the secret key will result in worse bounds on the entropy. We can then design our encryption algorithm to act as a randomness extractor from the secret key and a random seed $r$: $\mathrm{Enc} = \mathrm{Ext}(sk,r) \oplus m$. In our case, $r$ is the tuple $(g_1,\dots,g_\ell)$. The random seed will be part of the public key, but this is not a problem so long as our hash
+function is a strong extractor. All schemes which we know of which are leakage-resilient make
 use of extractors.
 
 \section{Part 2: Only computation leaks}
 
-How can we compute privately in a setting where an eavesdropper can record any computations? One approach is to identify a small, simple function which, if computed on trusted hardware, would allow for carrying out the computation covertly. The particular abstraction we want is a \emph{one-time memory}.
+How can we compute privately in a setting where an eavesdropper can record any computations? One approach is to identify a small, simple function which, if computed on trusted hardware, would allow for carrying out the rest of the computation covertly. The model here is that an ordinary user of the computer can make use of this trusted component, but an adversary cannot. We would like that:
+\begin{enumerate}
+\item The amount of trusted computation is small
+\item An adversary cannot easily gain access to data from a trusted computation.
+\item Without information from inside the trusted base, there is no way to recover the other intermediate stages of the program.
+\end{enumerate}
+The particular abstraction we want here is a \emph{one-time memory}.
 
 \begin{definition}
 A one-time memory stores two values $k_0$ and $k_1$. On input $b$, it outputs $k_b$ and deletes $k_{\neg b}$.
 \end{definition}
 
-The basic idea is that a one-time memory can stand in for oblivious transfer in our two-party computation protocol using Yao's garbled circuits (we refer back to previous notes on the details of circuit garbling). A nice feature of OTM is that for only computation leaks, we don't need any specialized hardware given fully homomorphic encryption. The computation only ever reads $k_b$, so no information is revealed about the other value stored in memory. And given the security properties of
-FHE, there is no way for an adversary to learn about the unencrypted values by looking at their encrypted counterparts. Furthermore, even if the adversary is powerful enough to read both keys stored in the OTM, we can still have some defence against this by encrypting them with a leakage-resilient scheme such as the QR one just discussed.
+The basic idea is that a one-time memory can stand in for oblivious transfer in our two-party computation protocol using Yao's garbled circuits (we refer back to previous notes on the details of circuit garbling). The idea with this would be to manufacture a piece of hardware that efficiently implements a one-time memory without leaking any information to the environment, the assumption being that OTM is a simple enough specification to make this feasible.
+
+However, another way to use OTM is for only computation leaks, where we don't need any specialized hardware given fully homomorphic encryption. The computation only ever reads $k_b$, so no information is revealed to the adversary about the other value stored in memory. And there is no way for an adversary to learn about the unencrypted values by looking at their encrypted counterparts. Furthermore, even if the adversary is powerful enough to read both keys stored in the OTM, we can still have some defence against this by encrypting them with a leakage-resilient scheme such as the QR one just discussed.
 
 However, OTMs have some serious drawbacks. If we want to compute $N$ different functions, we will need to garble them all offline, which means we can only do a bounded amount of online computation before having to go offline again.
 
