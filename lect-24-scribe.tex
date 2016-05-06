@@ -83,7 +83,7 @@ It's possible to translate physical observations into attacks on the security of
 
 There are countermeasures meant to prevent side-channel attacks such as those listed above. There are both hardware and software countermeasures. In hardware, it is possible to shield components to make it difficult to measure the emission of radiation or heat. In software, it is possible to try to fix the timing of cryptographic operations, to use oblivious RAM, and to use various other heuristics to prevent leakage of information through side-channels.
 
-Can we use more \emph{theory} at design time to battle reality? Can we do cryptography assuming \emph{no} secrecy? Maybe we don't need secret keys at all. Maybe everything can be public, and we can still do public key encryption, secure computation, and so on. \emph{Obfuscation} attempts to answer this question. In this lecture, we can't do away with all secrecy, but can reduce the amount of secrecy required.
+Can we use more \emph{theory} at design time to battle reality? Can we do cryptography assuming \emph{no} secrecy? Maybe we don't need secret keys at all. Maybe everything can be public, and we can still do public key encryption, secure computation, and so on. \emph{Obfuscation} attempts to answer this question (though it has seemingly yet to succeed). In this lecture, we can't do away with all secrecy, but can reduce the amount of secrecy required.
 
 Approaching side-channel attacks from a theoretical angle, we explicitly model side-channel attacks. We can then try to build modified schemes which are secure with respect to this model, and even try to construct general compilers for protocols secure against these models from protocols which are secure under classical cryptographic assumptions.
 
@@ -123,7 +123,7 @@ Let $\keys_S = \bit^{n_{SK}}$ be the set of private keys, represented as bitstri
 \< \sendmessageright*{m_0, m_1} \< \\
 \< \sendmessageleft*{c = \enc(pk, m_b)} \<  b \sample \bit \\
 \< \sendmessageright*{b'} \< \\
-\< \text{Challenger wins when $b = b'$} \<}
+\< \text{Adversary wins when $b = b'$} \<}
  \end{center}
  \caption{Semantic security for public-key encryption with side-channels}
  \end{figure}
