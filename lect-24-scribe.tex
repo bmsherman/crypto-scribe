@@ -175,7 +175,7 @@ $H$ is a 2-universal hash function family for $\mathcal{X} \rightarrow \mathcal{
 The key here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This follows from the fact that the $g_i$ are chosen uniformly at random, so their product must be uniform at random except for the degenerate case where all the $x_i$ are $0$. However, this cannot happen for both $x$ and $y$ if $x \neq y$.
 
 \begin{lemma}[Leftover hash lemma]
-If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$, $\mathcal{L} \in \mathcal{X} \rightarrow \mathcal{Y}$, $(h,h(x)) \approx (h,y)$, where $h \leftarrow H$ and $y \leftarrow_U \mathcal{Y}$.
+If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$, $d((h,h(x)), (h,U)) \le 2\sqrt{\frac{|Y|}{|X|}}$, where $h \leftarrow H$.
 \end{lemma}
 
 This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx (g_1,\dots,g_\ell,U)$.
@@ -190,7 +190,7 @@ An \emph{extractor} is a function $\mathrm{Ext}(x,r)$, where $x$ comes from a $k
 
 We can further refine the definition of an extractor to require it to output nearly uniform bits even when the random seed is exposed. The leftover hash lemma states that we can build these strong extractors out of 2-universal hash functions.
 
-Now, because some part of the key will leak, we can view the secret key as a $(1-\epsilon)n$-source, where leaking more bits of the secret key will result in worse bounds on the entropy. We can then design our encryption algorithm to act as a randomness extractor from the secret key and a random seed $r$: $\mathrm{Enc} = \mathrm{Ext}(sk,r) \oplus m$. In our case, $r$ is the tuple $(g_1,\dots,g_\ell)$. The random seed will be part of the public key, but this is not a problem so long as our hash
+Now, because some part of the key will leak, we can view the secret key as a $(1-\epsilon)n$-source, where leaking more bits of the secret key will result in worse bounds on the entropy. We can then design our encryption algorithm to act as a randomness extractor from the secret key and a random seed $r$: $\mathrm{Enc}(pk,m) = \mathrm{Ext}(sk,r) \oplus m$. In our case, $r$ is the tuple $(g_1,\dots,g_\ell)$. The random seed will be part of the public key, but this is not a problem so long as our hash
 function is a strong extractor. All schemes which we know of which are leakage-resilient make
 use of extractors.
 
@@ -209,11 +209,11 @@ The particular abstraction we want here is a \emph{one-time memory}.
 A \emph{one-time memory} stores two values, $k_0$ and $k_1$. On input $b$, it outputs $k_b$ and deletes $k_{\neg b}$.
 \end{definition}
 
-The basic idea is that a one-time memory can stand in for oblivious transfer in our two-party computation protocol using Yao's garbled circuits (refer back to previous notes on the details of circuit garbling). The idea with this would be to manufacture a piece of hardware that efficiently implements a one-time memory without leaking any information to the environment, the assumption being that OTM is a simple enough specification to make this feasible.
+The basic idea is that a one-time memory can stand in for oblivious transfer in our two-party computation protocol using Yao's garbled circuits (we refer back to previous notes on the details of circuit garbling). This gives us a one-time program which can be covertly executed on a specific input. The only thing an adversary can learn is the value of the output.
 
-However, another way to use OTM is for only computation leaks, where we don't need any specialized hardware given fully homomorphic encryption. The computation only ever reads $k_b$, so no information is revealed to the adversary about the other value stored in memory. And there is no way for an adversary to learn about the unencrypted values by looking at their encrypted counterparts. Furthermore, even if the adversary is powerful enough to read both keys stored in the OTM, we can still have some defense against this by encrypting them with a leakage-resilient scheme such as the QR one just discussed.
+We can use OTMs and their resulting OTPs in the scenario of only computation leaks, where instead of deleting the other key we simply don't look at it. The computation only ever reads $k_b$, so no information is revealed to the adversary about the other value stored in memory. And there is no way for an adversary to learn about the unencrypted values by looking at their encrypted counterparts. Furthermore, even if the adversary is powerful enough to read both keys stored in the OTM, we can still have some defence against this by encrypting them with a leakage-resilient scheme such as the QR one just discussed.
 
-However, OTMs have some serious drawbacks. If we want to compute $N$ different functions, we will need to garble them all offline, which means we can only do a bounded amount of online computation before having to go offline again.
+However, OTMs have some serious drawbacks. If we want to compute many different functions, we will need to garble them and their inputs all offline, which means we can only do a bounded amount of online computation before having to go offline again.
 
 
 % % % You should probably leave the below alone % % %
