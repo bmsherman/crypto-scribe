@@ -172,13 +172,13 @@ We remark here that there are exponentially many secret keys which match the pub
 $H$ is a 2-universal hash function family for $\mathcal{X} \rightarrow \mathcal{Y}$ if $\forall x \neq y \; \Pr_{h \leftarrow H}(h(x) = h(y)) = \frac{1}{|\mathcal{Y}|}$.
 \end{definition}
 
-The key here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This follows from the fact that the $g_i$ are chosen uniformly at random, so their product must be uniform at random except for the degenerate case where all the $x_i$ are $0$. However, this cannot happen for both $x$ and $y$ if $x \neq y$.
+The key here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This follows from the fact that the $g_i$ are chosen uniformly at random from $QR_N$, so their product must be uniform at random except for the degenerate case where all the $x_i$ are $0$. However, this cannot happen for both $x$ and $y$ if $x \neq y$.
 
 \begin{lemma}[Leftover hash lemma]
 If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$, $d((h,h(x)), (h,U)) \le 2\sqrt{\frac{|Y|}{|X|}}$, where $h \leftarrow H$.
 \end{lemma}
 
-This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx (g_1,\dots,g_\ell,U)$.
+This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx_S (g_1,\dots,g_\ell,U)$.
 
 \begin{definition}[Min-entropy]
 For a probability distribution $X$, we can define the \emph{min-entropy} as $H_1(X) = -\log \max_x \Pr(X = x)$. We say a random source is a \emph{$k$-source} if $H_1(X) > k \iff \forall x \Pr(X = x) < 2^{-k}$.
