@@ -103,7 +103,7 @@ There are a variety of ways to model side-channel attacks. All of the models gen
 
 \section{Bounded memory leakage (ML)}
 
-In this seection, we will consider how to design a public key encryption scheme which is secure with respect to the bounded memory leakage (ML) model, where the adversary can make partial measurements a bounded number of times.
+In this section, we will consider how to design a public key encryption scheme which is secure with respect to the bounded memory leakage (ML) model, where the adversary can make partial measurements a bounded number of times.
 
 The idea in this model is that the adversary can recover ``noisy''' keys. Suppose you're using RSA, and you have stored in memory the decryption exponent $d$ (where $d e = 1 \mod \varphi(n)$). The adversary can't see $d$ exactly, but can see a noisy version of $d$. 
 
@@ -180,7 +180,7 @@ $H$ is a 2-universal hash function family for $\mathcal{X} \rightarrow \mathcal{
 The key here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This follows from the fact that the $g_i$ are chosen uniformly at random from $QR_N$, so conditional on each possible choice of $x_i$s, their product must be uniform at random over $QR_N$, except for the degenerate case where all the $x_i$ are $0$. However, this cannot happen for both $x$ and $y$ if $x \neq y$.
 
 \begin{lemma}[Leftover hash lemma]
-If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$, $d((h,h(x)), (h,U)) \le 2\sqrt{\frac{|Y|}{|X|}}$, where $h \leftarrow H$.
+If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$, $d((h,h(x)), (h,U)) \le 2\sqrt{\frac{|\mathcal{Y}|}{|\mathcal{X}|}}$, where $h \leftarrow H$.
 \end{lemma}
 
 This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx_S (g_1,\dots,g_\ell,\unif{QR_N})$.
