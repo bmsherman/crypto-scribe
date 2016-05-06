@@ -50,13 +50,7 @@ primitives , events , complexity , asymptotics , keys
 {\lecnumber}
 
 %%%% body goes in here %%%%
-\section{Non-comprehensive Instructions}
-\begin{itemize}
-	\item Finish a first draft of the scribe notes by the day after lecture (i.e. Wednesday lecture $\rightarrow$ draft by Thursday night).
-	\item Send us your source (.tex) files, and a compiled file as as a PDF. (By email: {\tt 6.875-ta-sp16@mit.edu})
-\end{itemize}
-
-\section{Side-channel attacks (introduction)}
+\section{Introduction to side-channel attacks}
 
 So far in the class, the cryptographic protocols and constructions that we have considered have used the following assumptions:
 \begin{itemize}
@@ -67,9 +61,10 @@ So far in the class, the cryptographic protocols and constructions that we have 
 
 These common assumptions provide a rich theory based on reductionist security proofs from computational assumptions to secure primitives. And so far in this class, we have explored a variety of computational notions within this framework, and found some surprising abilities (such as public key cryptography, homomorphic encryption, etc.).
 
-For instance, a secret key that is stored on one's computer cannot be observed by an adversary. However, the above assumptions do not hold in many real-life settings, because computations ``leak.''
+However, the above assumptions do not hold in many real-life settings, because computations ``leak.''
+For instance, we assume a secret key that is stored on one's computer cannot be observed by an adversary, while this is not necessarily the case.
 
-When computations run on a computer, they consume power, and emit noise as well as radiation. If there's someone who can measure how much time the computation takes, how much heat the computer generates (such as by detecting changes in temperature in the nearby environment), this can give you information about the secret keys. 
+When computations run on a computer, they consume power, and emit noise and radiation. By measuring how much time the computation takes, or how much heat the computer generates (such as by detecting changes in temperature in the nearby environment), it is possible information about  secret keys used in cryptographic protocols. 
 
 It's possible to translate physical observations into attacks on the security of cryptographic schemes. Our proofs in the class so far have not taken into account these considerations. Attacks include:
 
@@ -107,7 +102,7 @@ In this section, we will consider how to design a public key encryption scheme w
 
 The idea in this model is that the adversary can recover ``noisy''' keys. Suppose you're using RSA, and you have stored in memory the decryption exponent $d$ (where $d e = 1 \mod \varphi(n)$). The adversary can't see $d$ exactly, but can see a noisy version of $d$. 
 
-We update the notion of semantic security to take into account the adversary's new capabilities. We're going to change it as follows: There is semantic security against a $\lambda$-memory attack if for any leakage function $L(\cdot)$, the adversary can't find $m_0$ and $m_1$ that can distinguish between the encryptions.
+We update the notion of semantic security to take into account the adversary's new capabilities. We're going to change it as follows: A scheme is semantically secure against a $\lambda$-memory attack if for any leakage function $L(\cdot)$ which can leak some fraction of the bits of the secret key (depending on the parameter $\lambda$), the adversary is still unable to distinguish encryptions (see the game in figure \ref{lambdasec}).
 
 Let $\keys_S = \bit^{n_{SK}}$ be the set of private keys, represented as bitstrings of length $n_SK$. We require for the measurement function $L : \keys_S \to \bit^n$ can only determine some number $\lambda(n_{SK})$ of the bits, that is, $n < \lambda(n_{SK})$. This means that it is impossible for $L$ to uniquely determine the secret key. In fact, this requirement is just as strong as the requirement that there must be some entropy remaining in the secret key when conditioned on the observation of $L$.
 
@@ -125,12 +120,13 @@ Let $\keys_S = \bit^{n_{SK}}$ be the set of private keys, represented as bitstri
 \< \sendmessageright*{b'} \< \\
 \< \text{Adversary wins when $b = b'$} \<}
  \end{center}
- \caption{Semantic security for public-key encryption with side-channels}
+ \caption{Semantic security game for public-key encryption with side-channels.}
+ \label{lambdasec}
  \end{figure}
 
 Most contemporary protocols are not very secure with respect to this model. RSA is theoretically secure with up to 50\% leakage, but practically found insecure with as little as 25\% leakage. AES is insecure against 85\% leakage.
 
-Is it possible to create public key encryption secure against memory leakage attacks with an arbitrarily large fraction of leakage? Yes, it is:
+It is in fact possible to create public key encryption secure against memory leakage attacks with an arbitrarily large fraction of leakage:
 
 \begin{theorem}
 For every $\varepsilon > 0$, there exists a public key encryption scheme that can tolerate $\lambda(n_{SK}) = (1 - \varepsilon)n_{SK}$ leakage attacks.
@@ -148,7 +144,7 @@ In this model, the key idea is to have exponentially-many secret keys for each p
 
 The last two properties work together to provide security in the following way. Given bounded leakage about any single secret key does not give the adversary enough information to single out that particular secret key. Therefore, if the adversary does succeed, the adversary must with high probability output a different secret key associated to the same public key. In this case, the challenger and adversary have contradicted the second property listed above, that given one secret key, it is intractable to find another with the same associated public key.
 
-\section{QR-based encryption scheme}
+\subsection{QR-based encryption scheme}
 
 We an define a system that is resilient against secret key leaks using the quadratic residuosity problem. The encryption scheme is as follows:
 \\
@@ -157,50 +153,58 @@ We an define a system that is resilient against secret key leaks using the quadr
 
 \textbf{Key Generation:} Randomly sample  $sk = (s_0,\dots,s_\ell) \leftarrow \{0,1\}^\ell$. For $i \in [1,\ell]$, sample $g_i \leftarrow QR_N$. $pk = (g_1,\dots,g_\ell,h)$, where $h = \prod_{i=1}^\ell g_i^{-s_i}$.
 
-\textbf{Encryption:} Randomly sample $r \leftarrow \mathbb{Z} \cap [0,N^2]$. For a message $m \in \{0,1\}$ and public key $(g_1,\dots,g_\ell,h)$, compute the ciphertext $c = (g_1^r,\dots,g_\ell^r,(-1)^m h^r)$. 
+\textbf{Encryption:} Randomly sample $r \leftarrow \mathbb{Z} \cap [0,N^2]$. For a message $m \in \bit$ and public key $(g_1,\dots,g_\ell,h)$, compute the ciphertext $c = (g_1^r,\dots,g_\ell^r,(-1)^m h^r)$. 
 
 \textbf{Decryption:} Given the ciphertext $(c_1,\dots,c_\ell,c_0)$ and secret key $(s_1,\dots,s_\ell)$, compute $c_0 \prod_{i=1}^\ell c_i^{s_i}$. Return $0$ if this is $1$, or $1$ if this is $-1$.
 \\
 
-Note that we chose $r$ from a set of size $N^2$, not $N$. The reason for this is ideally we would choose $r$ from a set the same size as $QR_N$, but we can't compute $|QR_N|$ without the factorization of $N$. Choosing $r$ from a set of size $N^2$ gets us close enough.
+Note that we chose $r$ from a set of size $N^2$, not $N$. The reason for this is that ideally, we would choose $r$ from a set the same size as $QR_N$, but we can't compute $|QR_N|$ without the factorization of $N$. Choosing $r$ from a set of size $N^2$ gets us close enough.
 
 The correctness of this scheme is fairly easy to see. The value we compute in decryption is exactly 
 \begin{align*}
 &(-1)^m h^r \prod_{i=1}^\ell g_i^{s_i r}
 \\ = &(-1)^m \prod_{i=1}^\ell g_i^{s_i r - s_i r}
-\\ = &(-1)^m
+\\ = &(-1)^m.
 \end{align*}
 
-We remark here that there are exponentially many secret keys which match the public key, for $\ell$ large enough. In fact, for the right choice of $\ell$, the $h$ will be very close to a uniform distribution over $QR_N$; this follows from the leftover hash lemma (which will be explained shortly). First, we recall the definition for a 2-universal hash function or pairwise hash function:
+There are exponentially many secret keys which match the public key, for $\ell$ large enough. In fact, for the right choice of $\ell$, the $h$ will be very close to a uniform distribution over $QR_N$; this follows from the leftover hash lemma (which will be explained shortly). First, we recall the definition for a 2-universal hash function or pairwise hash function:
 
 \begin{definition}
-$H$ is a 2-universal hash function family for $\mathcal{X} \rightarrow \mathcal{Y}$ if $\forall x \neq y \; \Pr_{h \leftarrow H}(h(x) = h(y)) = \frac{1}{|\mathcal{Y}|}$.
+$H$ is a 2-universal hash function family for $\mathcal{X} \rightarrow \mathcal{Y}$ if $\forall x \neq x' \; \Pr_{h \leftarrow H}(h(x) = h(x')) = \frac{1}{|\mathcal{Y}|}$.
 \end{definition}
 
-The key here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This follows from the fact that the $g_i$ are chosen uniformly at random from $QR_N$, so conditional on each possible choice of $x_i$s, their product must be uniform at random over $QR_N$, except for the degenerate case where all the $x_i$ are $0$. However, this cannot happen for both $x$ and $y$ if $x \neq y$.
+The key here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This follows from the fact that the $g_i$ are chosen uniformly at random from $QR_N$, so conditional on each possible choice of $x_i$s, their product must be uniform at random over $QR_N$, except for the degenerate case where all the $x_i$ are $0$. However, this cannot happen for both $x$ and $x'$ if $x \neq x'$.
 
 \begin{lemma}[Leftover hash lemma]
-If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$, $d((h,h(x)), (h,U)) \le 2\sqrt{\frac{|\mathcal{Y}|}{|\mathcal{X}|}}$, where $h \leftarrow H$.
+If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$,
+\[
+\delta(h \leftarrow H \then (h,h(\unif{\mathcal{X}})) \quad, \quad 
+         (h \leftarrow H \then (h,\unif{\mathcal{Y}})) \le 2\sqrt{\frac{|\mathcal{Y}|}{|\mathcal{X}|}}.
+\]
 \end{lemma}
 
-This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx_S (g_1,\dots,g_\ell,\unif{QR_N})$.
+This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx_S (g_1,\dots,g_\ell,\unif{QR_N})$, where $h = \prod_{i=1}^\ell g_i^{-s_i}$ and each $g_i \sim \unif{QR_N}$ and $s_i \sim \unif{\bit}$.
 
 \begin{definition}[Min-entropy]
-For a probability distribution $X$, we can define the \emph{min-entropy} as $H_1(X) = -\log \max_x \Pr(X = x)$. We say a random source is a \emph{$k$-source} if $H_1(X) > k \iff \forall x \Pr(X = x) < 2^{-k}$.
+For a random variable $X$, we can define its \emph{min-entropy} as 
+\[
+H_1(X) = -\log \max_x \Pr(X = x).
+\]
+We say a random source is a \emph{$k$-source} if $H_1(X) > k \iff \forall x \Pr(X = x) < 2^{-k}$.
 \end{definition}
 
 \begin{definition}
-An \emph{extractor} is a function $\mathrm{Ext}(x,r)$, where $x$ comes from a $k$-source, $r$ is a string of $d$ random bits, and $\mathrm{Ext}(x,r)$ is a string of bits of length $\ell$ that is indistinguishable from uniform.
+An \emph{extractor} is a function $\mathrm{Ext}(x,r)$, where $x$ comes from a $k$-source, $r$ is a string of $d$ random bits, and $\mathrm{Ext}(x,r)$ is a string of bits of length $\ell$ that is statistically indistinguishable from uniform.
 \end{definition}
 
 We can further refine the definition of an extractor to require it to output nearly uniform bits even when the random seed is exposed. The leftover hash lemma states that we can build these strong extractors out of 2-universal hash functions.
 
 
-Now, because some part of the key will leak, we can view the secret key as a $(1-\varepsilon)n$-source, where leaking more bits of the secret key will result in worse bounds on the entropy. We can then design our encryption algorithm to act as a randomness extractor from the secret key and a random seed $r$: $\mathrm{Enc}(pk,m) = \mathrm{Ext}(sk,r) \oplus m$. In our case, $r$ is the tuple $(g_1,\dots,g_\ell)$. The random seed will be part of the public key, but this is not a problem so long as our hash
+Now, because some part of the key will leak, we can view the secret key as a $(1-\varepsilon)n$-source, where leaking more bits of the secret key will result in worse bounds on the entropy. This QR-based encryption scheme can be viewed as encryption that uses a randomness extractor on the secret key and a random seed $r$: each encryption of a message is just $\mathrm{Enc}(pk,m) = \mathrm{Ext}(sk,r) \otimes m$. In our case, $r$ is the tuple $(g_1,\dots,g_\ell)$, and $\otimes$ is multiplication within the group $QR_N$. The random seed is part of the public key, but this is not a problem because our hash
 function is a strong extractor. All schemes which we know of which are leakage-resilient make
 use of extractors.
 
-\section{Part 2: Only computation leaks}
+\section{Only computation leaks}
 
 How can we compute privately in a setting where an eavesdropper can record any computations? One approach is to identify a small, simple function which, if computed on trusted hardware, would allow for carrying out the rest of the computation covertly. The model here is that an ordinary user of the computer can make use of this trusted component, but an adversary cannot. We would like that:
 \begin{enumerate}
