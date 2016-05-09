@@ -14,7 +14,7 @@
 %%% LECTURE NUMBER %%%
 \newcommand{\lecnumber}{24}
 %%% TITLE OF THE LECTURE %%%
-\newcommand{\lectitle}{Cryptography when secrecy is hard to find (leakage resistance)}
+\newcommand{\lectitle}{Leakage-resilient cryptography}
 %%% DATE OF THE LECTURE %%%
 \newcommand{\thedate}{May 4, 2016}
 
@@ -61,18 +61,18 @@ So far in the class, the cryptographic protocols and constructions that we have 
 
 These common assumptions provide a rich theory based on reductionist security proofs from computational assumptions to secure primitives. And so far in this class, we have explored a variety of computational notions within this framework, and found some surprising abilities (such as public key cryptography, homomorphic encryption, etc.).
 
-However, the above assumptions do not hold in many real-life settings, because computations ``leak.''
+However, the above assumptions do not hold in many real-life settings, because computations may ``leak'' information
 For instance, we assume a secret key that is stored on one's computer cannot be observed by an adversary, while this is not necessarily the case.
 
-When computations run on a computer, they consume power, and emit noise and radiation. By measuring how much time the computation takes, or how much heat the computer generates (such as by detecting changes in temperature in the nearby environment), it is possible information about  secret keys used in cryptographic protocols. 
+When computations run on a computer, they consume power, and emit noise and radiation. By measuring how much time the computation takes, or how much heat the computer generates (such as by detecting changes in temperature in the nearby environment), it is possible to learn information about secret keys used in cryptographic protocols. 
 
 It's possible to translate physical observations into attacks on the security of cryptographic schemes. Our proofs in the class so far have not taken into account these considerations. Attacks include:
 
 \begin{itemize}
-\item \emph{Cold boot attacks} are attacks on computers which are not running. If a computer is inspected not longer after it is shut off, the memory may still retain information, and so it is possible to recover secret keys. Contents in RAM decay slowly after losing power, and may last for several minutes.
+\item \emph{Cold boot attacks} are attacks on computers which are not running. If a computer is inspected not long after it is shut off, the memory may still retain information, and so it is possible to recover secret keys. Contents in RAM decay slowly after losing power, and may last for several minutes.
 \item Garfinkle \cite{garfinkel2003} looked at \emph{erased hard disks} and was able to recover lots of forensic information.
 \item \emph{Shared sources of randomness}: Often, there is reuse of secret keys across different cryptographic applications. Using access to many cryptographic public keys, where the private keys are correlated with each other (due to a shared source of randomness), it may be possible to defeat cryptographic security.
-\item \emph{Timing attacks} glean information by measuring how much time a computation takes. For instance, one can, by observing how much time an RSA signing scheme takes, learn about the RSA exponent (given that signing is performed via repeated squaring with the exponent, and some exponents will take longer than others).
+\item \emph{Timing attacks} glean information by measuring how much time a computation takes. For instance, one can, by observing how much time an RSA signing scheme takes, learn about the RSA exponent (if signing is performed via repeated squaring with the exponent, and some exponents will take longer than others).
 \item \emph{Power consumption attacks} measure the power consumed while performing cryptographic operations.
 \end{itemize}
 
@@ -100,11 +100,14 @@ There are a variety of ways to model side-channel attacks. All of the models gen
 
 In this section, we will consider how to design a public key encryption scheme which is secure with respect to the bounded memory leakage (ML) model, where the adversary can make partial measurements a bounded number of times.
 
-The idea in this model is that the adversary can recover ``noisy''' keys. Suppose you're using RSA, and you have stored in memory the decryption exponent $d$ (where $d e = 1 \mod \varphi(n)$). The adversary can't see $d$ exactly, but can see a noisy version of $d$. 
+The idea in this model is that the adversary can recover ``noisy'' keys. Suppose you're using RSA, and you have stored in memory the decryption exponent $d$ (where $d e = 1 \mod \varphi(n)$). The adversary can't see $d$ exactly, but can see a noisy version of $d$. 
 
-We update the notion of semantic security to take into account the adversary's new capabilities. We're going to change it as follows: A scheme is semantically secure against a $\lambda$-memory attack if for any leakage function $L(\cdot)$ which can leak some fraction of the bits of the secret key (depending on the parameter $\lambda$), the adversary is still unable to distinguish encryptions (see the game in figure \ref{lambdasec}).
+We update the notion of semantic security to take into account the adversary's new capabilities. We're going to change it as follows:
+\begin{definition}
+A scheme is \emph{semantically secure against $\lambda$-memory attacks} if for any leakage function $L(\cdot)$ which can leak some fraction of the bits of the secret key (depending on the parameter $\lambda$), the adversary is still unable to distinguish encryptions (see the game in figure \ref{lambdasec}).
+\end{definition}
 
-Let $\keys_S = \bit^{n_{SK}}$ be the set of private keys, represented as bitstrings of length $n_SK$. We require for the measurement function $L : \keys_S \to \bit^n$ can only determine some number $\lambda(n_{SK})$ of the bits, that is, $n < \lambda(n_{SK})$. This means that it is impossible for $L$ to uniquely determine the secret key. In fact, this requirement is just as strong as the requirement that there must be some entropy remaining in the secret key when conditioned on the observation of $L$.
+Let $\keys_S = \bit^{n_{SK}}$ be the set of private keys, represented as bitstrings of length $n_{SK}$. We require for the measurement function $L : \keys_S \to \bit^n$ can only determine some number $\lambda(n_{SK})$ of the bits, that is, $n < \lambda(n_{SK})$. This means that it is impossible for $L$ to uniquely determine the secret key. In fact, this requirement is just as strong as the requirement that there must be some entropy remaining in the secret key when conditioned on the observation of $L$.
 
 \begin{figure}
 \begin{center}
@@ -129,20 +132,20 @@ Most contemporary protocols are not very secure with respect to this model. RSA 
 It is in fact possible to create public key encryption secure against memory leakage attacks with an arbitrarily large fraction of leakage:
 
 \begin{theorem}
-For every $\varepsilon > 0$, there exists a public key encryption scheme that can tolerate $\lambda(n_{SK}) = (1 - \varepsilon)n_{SK}$ leakage attacks.
+For every $\varepsilon > 0$, there exists a public key encryption scheme that is semantically secure  against $\lambda$-memory attacks where $\lambda(n_{SK})= (1 - \varepsilon)n_{SK}$.
 \end{theorem}
-Constructions of such schemes use either lattice problems, Diffie-Hellman decisional intractability, or Quadratic Residuosity intractabilty.
+Known constructions of such schemes are based on either the hardness of lattice problems, Diffie-Hellman decisional intractability, or Quadratic Residuosity intractabilty.
 
 Most of these schemes share common features which make them leakage resilient. In previous models (which did not model side channels), public key cryptography was essentially based on having a public key $pk$ for which it is a hard problem to find the associated secret key $sk$.
 
-In this model, the key idea is to have exponentially-many secret keys for each public key, and to ensure the following properties:
-\begin{itemize}
+In this model, a key idea is to have exponentially-many secret keys for each public key, and to ensure the following properties:
+\begin{enumerate}
 \item All secret keys associated with a given public key can decrypt messages encrypted with that public key (correctness).
-\item Given the public key and one associated secret key, finding another secret key associated with that public key is intractable.
-\item Given the public key $pk$ and some fraction of the bits for an associated secret key $sk$, it is intractable to output the exact same secret key $sk$ with non-negligible probability.
-\end{itemize}
+\item \label{two-keys-intractible} Given the public key and one associated secret key, finding another secret key associated with that public key is intractable.
+\item \label{same-key-intractible} Given the public key $pk$ and some fraction of the bits for an associated secret key $sk$, it is intractable to output the exact same secret key $sk$ with non-negligible probability.
+\end{enumerate}
 
-The last two properties work together to provide security in the following way. Given bounded leakage about any single secret key does not give the adversary enough information to single out that particular secret key. Therefore, if the adversary does succeed, the adversary must with high probability output a different secret key associated to the same public key. In this case, the challenger and adversary have contradicted the second property listed above, that given one secret key, it is intractable to find another with the same associated public key.
+The last two properties work together to provide security in the following way. Property \ref{two-keys-intractible} say that bounded leakage about any single secret key does not give the adversary enough information to single out that particular secret key. Therefore, if the adversary does succeed in recovering some secret key, the adversary must with high probability output a different secret key associated to the same public key. In this case, the challenger and adversary have contradicted Property \ref{same-key-intractible}, which says that given one secret key, it is intractable to find another with the same associated public key.
 
 \subsection{QR-based encryption scheme}
 
