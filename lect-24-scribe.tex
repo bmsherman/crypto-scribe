@@ -147,7 +147,7 @@ In this model, a key idea is to have exponentially-many secret keys for each pub
 
 The last two properties work together to provide security in the following way. Property \ref{two-keys-intractible} say that bounded leakage about any single secret key does not give the adversary enough information to single out that particular secret key. Therefore, if the adversary does succeed in recovering some secret key, the adversary must with high probability output a different secret key associated to the same public key. In this case, the challenger and adversary have contradicted Property \ref{same-key-intractible}, which says that given one secret key, it is intractable to find another with the same associated public key.
 
-\subsection{QR-based encryption scheme}
+\subsection{QR-based encryption scheme \cite{Brakerski2010}}
 
 We an define a system that is resilient against secret key leaks using the quadratic residuosity problem. The encryption scheme is as follows:
 \\
@@ -170,15 +170,24 @@ The correctness of this scheme is fairly easy to see. The value we compute in de
 \\ = &(-1)^m.
 \end{align*}
 
-There are exponentially many secret keys which match the public key, for $\ell$ large enough. In fact, for the right choice of $\ell$, the $h$ will be very close to a uniform distribution over $QR_N$; this follows from the leftover hash lemma (which will be explained shortly). First, we recall the definition for a 2-universal hash function or pairwise hash function:
+There are exponentially many secret keys which match the public key, for $\ell$ large enough. In fact, for the right choice of $\ell$, the $h$ will be very close to a uniform distribution over $QR_N$; this follows from the leftover hash lemma (which will be explained shortly). First, we recall the definition for a 2-universal hash function:
 
 \begin{definition}
-$H$ is a 2-universal hash function family for $\mathcal{X} \rightarrow \mathcal{Y}$ if $\forall x \neq x' \; \Pr_{h \leftarrow H}(h(x) = h(x')) = \frac{1}{|\mathcal{Y}|}$.
+$H$ is a 2-universal hash function family from $\mathcal{X}$ to $ \mathcal{Y}$ if $\forall x \neq x' \; \Pr_{h \leftarrow H}(h(x) = h(x')) = \frac{1}{|\mathcal{Y}|}$.
 \end{definition}
 
-The key here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This follows from the fact that the $g_i$ are chosen uniformly at random from $QR_N$, so conditional on each possible choice of $x_i$s, their product must be uniform at random over $QR_N$, except for the degenerate case where all the $x_i$ are $0$. However, this cannot happen for both $x$ and $x'$ if $x \neq x'$.
+The key here is that the hash function family $h_{g_1,\dots,g_\ell}(x) = \prod_{i=1}^\ell g_i ^ {x_i}$ is 2-universal. This follows from the fact that the $g_i$ are chosen uniformly at random from $QR_N$, so conditional on each possible choice of $x_i$s, their product must be uniformly random over $QR_N$, except for the degenerate case where all the $x_i$ are $0$. However, this cannot happen for both $x$ and $x'$ if $x \neq x'$.
 
-\begin{lemma}[Leftover hash lemma]
+\begin{definition}
+
+The statistical distance $\delta$  between two probability distributions $X$ and $Y$ is
+\[
+    \delta(X,Y) = \frac{1}{2} \sum_v | \Pr[X = v] - \Pr[Y = v] |
+\]
+
+\end{definition}
+
+\begin{lemma}[Leftover hash lemma \cite{ill89}]
 If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, then for any $x \in \mathcal{X}$,
 \[
 \delta(h \leftarrow H \then (h,h(\unif{\mathcal{X}})) \quad, \quad 
@@ -186,12 +195,12 @@ If $H$ is a 2-universal hash family on $\mathcal{X} \leftarrow \mathcal{Y}$, the
 \]
 \end{lemma}
 
-This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx_S (g_1,\dots,g_\ell,\unif{QR_N})$, where $h = \prod_{i=1}^\ell g_i^{-s_i}$ and each $g_i \sim \unif{QR_N}$ and $s_i \sim \unif{\bit}$.
+This tells us that for sufficiently large $\ell$, $(g_1,\dots,g_\ell,h) \approx (g_1,\dots,g_\ell,\unif{QR_N})$, where $h = \prod_{i=1}^\ell g_i^{-s_i}$, each $g_i \sim \unif{QR_N}$ and $s_i \sim \unif{\bit}$, and $\approx$ denotes the statistical distance being negligible in the security parameter.
 
 \begin{definition}[Min-entropy]
 For a random variable $X$, we can define its \emph{min-entropy} as 
 \[
-H_1(X) = -\log \max_x \Pr(X = x).
+H_1(X) = -\log \big( \max_x \Pr(X = x) \big).
 \]
 We say a random source is a \emph{$k$-source} if $H_1(X) > k \iff \forall x \Pr(X = x) < 2^{-k}$.
 \end{definition}
@@ -200,14 +209,14 @@ We say a random source is a \emph{$k$-source} if $H_1(X) > k \iff \forall x \Pr(
 An \emph{extractor} is a function $\mathrm{Ext}(x,r)$, where $x$ comes from a $k$-source, $r$ is a string of $d$ random bits, and $\mathrm{Ext}(x,r)$ is a string of bits of length $\ell$ that is statistically indistinguishable from uniform.
 \end{definition}
 
-We can further refine the definition of an extractor to require it to output nearly uniform bits even when the random seed is exposed. The leftover hash lemma states that we can build these strong extractors out of 2-universal hash functions.
+We can further refine the definition of an extractor to require it to output nearly uniform bits even when the random seed is partially exposed. The leftover hash lemma states that we can build these strong extractors out of 2-universal hash functions.
 
 
 Now, because some part of the key will leak, we can view the secret key as a $(1-\varepsilon)n$-source, where leaking more bits of the secret key will result in worse bounds on the entropy. This QR-based encryption scheme can be viewed as encryption that uses a randomness extractor on the secret key and a random seed $r$: each encryption of a message is just $\mathrm{Enc}(pk,m) = \mathrm{Ext}(sk,r) \otimes m$. In our case, $r$ is the tuple $(g_1,\dots,g_\ell)$, and $\otimes$ is multiplication within the group $QR_N$. The random seed is part of the public key, but this is not a problem because our hash
 function is a strong extractor. All schemes which we know of which are leakage-resilient make
 use of extractors.
 
-\section{Only computation leaks}
+\section{Only computation leakage (OC)}
 
 How can we compute privately in a setting where an eavesdropper can record any computations? One approach is to identify a small, simple function which, if computed on trusted hardware, would allow for carrying out the rest of the computation covertly. The model here is that an ordinary user of the computer can make use of this trusted component, but an adversary cannot. We would like that:
 \begin{enumerate}
@@ -215,18 +224,17 @@ How can we compute privately in a setting where an eavesdropper can record any c
 \item An adversary cannot easily gain access to data from a trusted computation.
 \item Without information from inside the trusted base, there is no way to recover the other intermediate stages of the program.
 \end{enumerate}
-
-The particular abstraction we want here is a \emph{one-time memory}.
+A particularly useful instantiation of a trusted component is a \emph{one-time memory}.
 
 \begin{definition}
-A \emph{one-time memory} stores two values, $k_0$ and $k_1$. On input $b$, it outputs $k_b$ and deletes $k_{\neg b}$.
+A \emph{one-time memory} (OTM) stores two values, $k_0$ and $k_1$. On input $b$, it outputs $k_b$ and deletes $k_{\neg b}$.
 \end{definition}
 
 The basic idea is that a one-time memory can stand in for oblivious transfer in our two-party computation protocol using Yao's garbled circuits (we refer back to previous notes on the details of circuit garbling). This gives us a one-time program which can be covertly executed on a specific input. The only thing an adversary can learn is the value of the output.
 
 We can use OTMs and their resulting OTPs in the scenario of only computation leaks, where instead of deleting the other key we simply don't look at it. The computation only ever reads $k_b$, so no information is revealed to the adversary about the other value stored in memory. And there is no way for an adversary to learn about the unencrypted values by looking at their encrypted counterparts. Furthermore, even if the adversary is powerful enough to read both keys stored in the OTM, we can still have some defence against this by encrypting them with a leakage-resilient scheme such as the QR one just discussed.
 
-However, OTMs have some serious drawbacks. If we want to compute many different functions, we will need to garble them and their inputs all offline, which means we can only do a bounded amount of online computation before having to go offline again.
+However, OTMs, even if they could be implemented with secure hardware, have some serious drawbacks. If we want to compute many different functions, we will need to garble them and their inputs all offline, which means we can only do a bounded amount of online computation before having to go offline again.
 
 
 % % % You should probably leave the below alone % % %
